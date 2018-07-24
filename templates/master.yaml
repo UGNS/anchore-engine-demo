@@ -1,0 +1,120 @@
+Description: >
+  This template illustrates how to deploy Anchore engine.
+
+  This will setup a 2 subnet VPC containing a 1 instance Elastic Container
+  Service (ECS) cluster that the Anchore Engine containers will be deployed
+  behind an Application Load Balancer (ALB).
+
+  Outputs tab will contain the environment variable values for anchore-cli.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: RDS Configuration
+        Parameters:
+          - RDSInstanceType
+          - DatabaseName
+          - DatabaseUsername
+          - DatabasePassword
+
+      - Label:
+          default: ECS Configuration
+        Parameters:
+          - ECSInstanceType
+
+      - Label:
+          default: Anchore Configuration
+        Parameters:
+          - EngineImage
+
+    ParameterLabels:
+      RDSInstanceType:
+        default: Instance Type
+      ECSInstanceType:
+        default: Instance Type
+      DatabaseName:
+        default: Database Name
+      DatabaseUsername:
+        default: Master Username
+      DatabasePassword:
+        default: Master User Password
+      EngineImage:
+        default: Engine Docker Image
+
+
+Parameters:
+  ECSInstanceType:
+    Type: String
+    Default: t2.large
+  RDSInstanceType:
+    Type: String
+    Default: db.t2.micro
+  DatabaseName:
+    Type: String
+    Default: anchore
+  DatabaseUsername:
+    Type: String
+    Default: anchore
+  DatabasePassword:
+    Type: String
+    Default: Yt78nahA
+    NoEcho: True
+  EngineImage:
+    Type: String
+    Default: anchore/anchore-engine:v0.2.3
+
+Resources:
+  Infrastructure:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/anchore-engine-demo-${AWS::Region}/infrastructure.yaml"
+      Parameters:
+        InstanceType: !Ref ECSInstanceType
+
+  Database:
+    DependsOn:
+      - Infrastructure
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/anchore-engine-demo-${AWS::Region}/database.yaml"
+      Parameters:
+        VPC: !GetAtt Infrastructure.Outputs.VPC
+        Subnet1: !GetAtt Infrastructure.Outputs.Subnet1
+        Subnet2: !GetAtt Infrastructure.Outputs.Subnet2
+        SecurityGroup: !GetAtt Infrastructure.Outputs.ECSHostSecurityGroup
+        InstanceType: !Ref RDSInstanceType
+        DBName: !Ref DatabaseName
+        MasterUsername: !Ref DatabaseUsername
+        MasterPassword: !Ref DatabasePassword
+
+  Anchore:
+    DependsOn:
+      - Database
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/anchore-engine-demo-${AWS::Region}/anchore.yaml"
+      Parameters:
+        ALB: !GetAtt Infrastructure.Outputs.ALB
+        ALBCNAME: !GetAtt Infrastructure.Outputs.ALBCNAME
+        ECSCluster: !GetAtt Infrastructure.Outputs.ECSCluster
+        VPC: !GetAtt Infrastructure.Outputs.VPC
+        DBHost: !GetAtt Database.Outputs.Endpoint
+        DBPort: !GetAtt Database.Outputs.Port
+        DBName: !GetAtt Database.Outputs.DatabaseName
+        DBUser: !GetAtt Database.Outputs.MasterUsername
+        DBPass: !GetAtt Database.Outputs.MasterPassword
+        EngineImage: !Ref EngineImage
+
+Outputs:
+  AnchoreCliUrl:
+    Description: ANCHORE_CLI_URL value
+    Value: !Sub
+      - "http://${AnchoreEngine}:8228/v1"
+      - AnchoreEngine: !GetAtt Infrastructure.Outputs.ALBCNAME
+  AnchoreCliUser:
+    Description: ANCHORE_CLI_USER value
+    Value: admin
+  AnchoreCliPass:
+    Description: ANCHORE_CLI_PASS value
+    Value: foobar

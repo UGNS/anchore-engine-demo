@@ -1,0 +1,499 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Creating anchore-engine ECS services
+
+Parameters:
+  ALB:
+    Type: String
+  ALBCNAME:
+    Type: String
+  ECSCluster:
+    Type: String
+  VPC:
+    Type: String
+  DBHost:
+    Type: String
+  DBPort:
+    Type: String
+  DBName:
+    Type: String
+  DBUser:
+    Type: String
+  DBPass:
+    Type: String
+    NoEcho: true
+  EngineImage:
+    Type: String
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/${AWS::StackName}
+
+  CatalogTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: catalog
+          Image: !Ref EngineImage
+          PortMappings:
+            - ContainerPort: 8082
+          MemoryReservation: 512
+          LogConfiguration:
+             LogDriver: awslogs
+             Options:
+               awslogs-group: !Ref LogGroup
+               awslogs-region: !Ref AWS::Region
+               awslogs-stream-prefix: anchore-engine
+          MountPoints:
+            - SourceVolume: "config"
+              ContainerPath: "/config/config.yaml"
+              ReadOnly: true
+          Environment:
+            - Name: ANCHORE_ENGINE_SERVICES
+              Value: anchore-catalog
+            - Name: ANCHORE_HOST_ID
+              Value: anchore-engine-ecs
+            - Name: ANCHORE_DB_USER
+              Value: !Ref DBUser
+            - Name: ANCHORE_DB_PASSWORD
+              Value: !Ref DBPass
+            - Name: ANCHORE_DB_NAME
+              Value: !Ref DBName
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_HOST
+              Value: !Ref DBHost
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_PORT
+              Value: !Ref DBPort
+            - Name: ANCHORE_ENGINE_SERVICE_SERVICE_HOST
+              Value: !Ref ALBCNAME
+      Volumes:
+        - Name: "config"
+          Host:
+            SourcePath: "/opt/anchore/config.yaml.example"
+
+  SimpleQueueTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: simplequeue
+          Image: !Ref EngineImage
+          PortMappings:
+            - ContainerPort: 8083
+          MemoryReservation: 512
+          LogConfiguration:
+             LogDriver: awslogs
+             Options:
+               awslogs-group: !Ref LogGroup
+               awslogs-region: !Ref AWS::Region
+               awslogs-stream-prefix: anchore-engine
+          MountPoints:
+            - SourceVolume: "config"
+              ContainerPath: "/config/config.yaml"
+              ReadOnly: true
+          Environment:
+            - Name: ANCHORE_ENGINE_SERVICES
+              Value: anchore-simplequeue
+            - Name: ANCHORE_HOST_ID
+              Value: anchore-engine-ecs
+            - Name: ANCHORE_DB_USER
+              Value: !Ref DBUser
+            - Name: ANCHORE_DB_PASSWORD
+              Value: !Ref DBPass
+            - Name: ANCHORE_DB_NAME
+              Value: !Ref DBName
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_HOST
+              Value: !Ref DBHost
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_PORT
+              Value: !Ref DBPort
+            - Name: ANCHORE_ENGINE_SERVICE_SERVICE_HOST
+              Value: !Ref ALBCNAME
+      Volumes:
+        - Name: "config"
+          Host:
+            SourcePath: "/opt/anchore/config.yaml.example"
+
+  PolicyEngineTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: policy_engine
+          Image: !Ref EngineImage
+          PortMappings:
+            - ContainerPort: 8087
+          MemoryReservation: 512
+          LogConfiguration:
+             LogDriver: awslogs
+             Options:
+               awslogs-group: !Ref LogGroup
+               awslogs-region: !Ref AWS::Region
+               awslogs-stream-prefix: anchore-engine
+          MountPoints:
+            - SourceVolume: "config"
+              ContainerPath: "/config/config.yaml"
+              ReadOnly: true
+          Environment:
+            - Name: ANCHORE_ENGINE_SERVICES
+              Value: anchore-policy-engine
+            - Name: ANCHORE_HOST_ID
+              Value: anchore-engine-ecs
+            - Name: ANCHORE_DB_USER
+              Value: !Ref DBUser
+            - Name: ANCHORE_DB_PASSWORD
+              Value: !Ref DBPass
+            - Name: ANCHORE_DB_NAME
+              Value: !Ref DBName
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_HOST
+              Value: !Ref DBHost
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_PORT
+              Value: !Ref DBPort
+            - Name: ANCHORE_ENGINE_SERVICE_SERVICE_HOST
+              Value: !Ref ALBCNAME
+      Volumes:
+        - Name: "config"
+          Host:
+            SourcePath: "/opt/anchore/config.yaml.example"
+
+  ApiTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: apiext
+          Image: !Ref EngineImage
+          PortMappings:
+            - ContainerPort: 8228
+          MemoryReservation: 512
+          LogConfiguration:
+             LogDriver: awslogs
+             Options:
+               awslogs-group: !Ref LogGroup
+               awslogs-region: !Ref AWS::Region
+               awslogs-stream-prefix: anchore-engine
+          MountPoints:
+            - SourceVolume: "config"
+              ContainerPath: "/config/config.yaml"
+              ReadOnly: true
+          Environment:
+            - Name: ANCHORE_ENGINE_SERVICES
+              Value: anchore-api
+            - Name: ANCHORE_HOST_ID
+              Value: anchore-engine-ecs
+            - Name: ANCHORE_DB_USER
+              Value: !Ref DBUser
+            - Name: ANCHORE_DB_PASSWORD
+              Value: !Ref DBPass
+            - Name: ANCHORE_DB_NAME
+              Value: !Ref DBName
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_HOST
+              Value: !Ref DBHost
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_PORT
+              Value: !Ref DBPort
+            - Name: ANCHORE_ENGINE_SERVICE_SERVICE_HOST
+              Value: !Ref ALBCNAME
+      Volumes:
+        - Name: "config"
+          Host:
+            SourcePath: "/opt/anchore/config.yaml.example"
+
+  KubernetesTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: kubernetes-webhook
+          Image: !Ref EngineImage
+          PortMappings:
+            - ContainerPort: 8338
+          MemoryReservation: 512
+          LogConfiguration:
+             LogDriver: awslogs
+             Options:
+               awslogs-group: !Ref LogGroup
+               awslogs-region: !Ref AWS::Region
+               awslogs-stream-prefix: anchore-engine
+          MountPoints:
+            - SourceVolume: "config"
+              ContainerPath: "/config/config.yaml"
+              ReadOnly: true
+          Environment:
+            - Name: ANCHORE_ENGINE_SERVICES
+              Value: anchore-kubernetes-webhook
+            - Name: ANCHORE_HOST_ID
+              Value: anchore-engine-ecs
+            - Name: ANCHORE_DB_USER
+              Value: !Ref DBUser
+            - Name: ANCHORE_DB_PASSWORD
+              Value: !Ref DBPass
+            - Name: ANCHORE_DB_NAME
+              Value: !Ref DBName
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_HOST
+              Value: !Ref DBHost
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_PORT
+              Value: !Ref DBPort
+            - Name: ANCHORE_ENGINE_SERVICE_SERVICE_HOST
+              Value: !Ref ALBCNAME
+      Volumes:
+        - Name: "config"
+          Host:
+            SourcePath: "/opt/anchore/config.yaml.example"
+
+  WorkerTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: analyzer
+          Image: !Ref EngineImage
+          PortMappings:
+            - ContainerPort: 8084
+          MemoryReservation: 512
+          LogConfiguration:
+             LogDriver: awslogs
+             Options:
+               awslogs-group: !Ref LogGroup
+               awslogs-region: !Ref AWS::Region
+               awslogs-stream-prefix: anchore-engine
+          MountPoints:
+            - SourceVolume: "config"
+              ContainerPath: "/config/config.yaml"
+              ReadOnly: true
+          Environment:
+            - Name: ANCHORE_ENGINE_SERVICES
+              Value: anchore-worker
+            - Name: ANCHORE_HOST_ID
+              Value: anchore-engine-ecs
+            - Name: ANCHORE_DB_USER
+              Value: !Ref DBUser
+            - Name: ANCHORE_DB_PASSWORD
+              Value: !Ref DBPass
+            - Name: ANCHORE_DB_NAME
+              Value: !Ref DBName
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_HOST
+              Value: !Ref DBHost
+            - Name: ANCHORE_DB_POSTGRESQL_SERVICE_PORT
+              Value: !Ref DBPort
+            - Name: ANCHORE_ENGINE_SERVICE_SERVICE_HOST
+              Value: !Ref ALBCNAME
+      Volumes:
+        - Name: "config"
+          Host:
+            SourcePath: "/opt/anchore/config.yaml.example"
+
+  CatalogService:
+    Type: AWS::ECS::Service
+    DependsOn: CatalogListener
+    Properties:
+      Role: !GetAtt ECSServiceRole.Arn
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 60
+      LoadBalancers:
+        - TargetGroupArn: !Ref CatalogTargetGroup
+          ContainerPort: 8082
+          ContainerName: catalog
+      TaskDefinition: !Ref CatalogTask
+
+  SimpleQueueService:
+    Type: AWS::ECS::Service
+    DependsOn: SimpleQueueListener
+    Properties:
+      Role: !GetAtt ECSServiceRole.Arn
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 60
+      LoadBalancers:
+        - TargetGroupArn: !Ref SimpleQueueTargetGroup
+          ContainerPort: 8083
+          ContainerName: simplequeue
+      TaskDefinition: !Ref SimpleQueueTask
+
+  PolicyEngineService:
+    Type: AWS::ECS::Service
+    DependsOn: PolicyEngineListener
+    Properties:
+      Role: !GetAtt ECSServiceRole.Arn
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 60
+      LoadBalancers:
+        - TargetGroupArn: !Ref PolicyEngineTargetGroup
+          ContainerPort: 8087
+          ContainerName: policy_engine
+      TaskDefinition: !Ref PolicyEngineTask
+
+  ApiService:
+    Type: AWS::ECS::Service
+    DependsOn: ApiListener
+    Properties:
+      Role: !GetAtt ECSServiceRole.Arn
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 60
+      LoadBalancers:
+        - TargetGroupArn: !Ref ApiTargetGroup
+          ContainerPort: 8228
+          ContainerName: apiext
+      TaskDefinition: !Ref ApiTask
+
+  KubernetesService:
+    Type: AWS::ECS::Service
+    DependsOn: KubernetesListener
+    Properties:
+      Role: !GetAtt ECSServiceRole.Arn
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 60
+      LoadBalancers:
+        - TargetGroupArn: !Ref KubernetesTargetGroup
+          ContainerPort: 8338
+          ContainerName: kubernetes-webhook
+      TaskDefinition: !Ref KubernetesTask
+
+  WorkerService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      TaskDefinition: !Ref WorkerTask
+
+  CatalogTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 60
+      UnhealthyThresholdCount: 10
+      HealthCheckPath: /v1/status
+      Matcher:
+        HttpCode: 401
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+
+  SimpleQueueTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 60
+      UnhealthyThresholdCount: 10
+      HealthCheckPath: /v1/status
+      Matcher:
+        HttpCode: 401
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+
+  PolicyEngineTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 129
+      UnhealthyThresholdCount: 10
+      HealthCheckPath: /v1/status
+      Matcher:
+        HttpCode: 401
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+
+  ApiTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 60
+      UnhealthyThresholdCount: 10
+      HealthCheckPath: /health
+      Matcher:
+        HttpCode: 200
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+
+  KubernetesTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 60
+      UnhealthyThresholdCount: 10
+      HealthCheckPath: /v1/status
+      Matcher:
+        HttpCode: 401
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VPC
+
+  CatalogListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: ECSServiceRole
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref CatalogTargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 8082
+      Protocol: HTTP
+
+  SimpleQueueListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref SimpleQueueTargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 8083
+      Protocol: HTTP
+
+  PolicyEngineListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref PolicyEngineTargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 8087
+      Protocol: HTTP
+
+  ApiListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ApiTargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 8228
+      Protocol: HTTP
+
+  KubernetesListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref KubernetesTargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 8338
+      Protocol: HTTP
+
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+
+  ECSServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - ecs.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole

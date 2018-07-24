@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Creating anchore-engine RDS
+
+Parameters:
+  VPC:
+    Type: String
+  Subnet1:
+    Type: String
+  Subnet2:
+    Type: String
+  SecurityGroup:
+    Type: String
+  InstanceType:
+    Type: String
+  DBName:
+    Type: String
+  MasterPassword:
+    Type: String
+    NoEcho: true
+  MasterUsername:
+    Type: String
+
+Resources:
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnets available for the RDS DB Instance
+      SubnetIds:
+        - !Ref Subnet1
+        - !Ref Subnet2
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: DB Security Group
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  IngressRule001:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: !GetAtt DbInstance.Endpoint.Port
+      ToPort: !GetAtt DbInstance.Endpoint.Port
+      SourceSecurityGroupId: !Ref SecurityGroup
+      GroupId: !GetAtt DbSecurityGroup.GroupId
+
+  DbInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 20
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      DBName: !Ref DBName
+      Engine: postgres
+      VPCSecurityGroups:
+        - !Ref DbSecurityGroup
+      DBInstanceClass: !Ref InstanceType
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterPassword
+      StorageType: gp2
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+Outputs:
+  Endpoint:
+    Value: !GetAtt DbInstance.Endpoint.Address
+  Port:
+    Value: !GetAtt DbInstance.Endpoint.Port
+  MasterUsername:
+    Value: !Ref MasterUsername
+  MasterPassword:
+    Value: !Ref MasterPassword
+  DatabaseName:
+    Value: !Ref DBName
