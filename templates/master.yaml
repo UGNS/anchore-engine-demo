@@ -1,3 +1,4 @@
+---
 Description: >
   This template illustrates how to deploy Anchore engine.
 
@@ -59,7 +60,7 @@ Parameters:
   DatabasePassword:
     Type: String
     Default: Yt78nahA
-    NoEcho: True
+    NoEcho: true
   EngineImage:
     Type: String
     Default: anchore/anchore-engine:v0.2.3

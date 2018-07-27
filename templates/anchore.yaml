@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: Creating anchore-engine ECS services
@@ -42,11 +43,11 @@ Resources:
             - ContainerPort: 8082
           MemoryReservation: 512
           LogConfiguration:
-             LogDriver: awslogs
-             Options:
-               awslogs-group: !Ref LogGroup
-               awslogs-region: !Ref AWS::Region
-               awslogs-stream-prefix: anchore-engine
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: anchore-engine
           MountPoints:
             - SourceVolume: "config"
               ContainerPath: "/config/config.yaml"
@@ -54,8 +55,6 @@ Resources:
           Environment:
             - Name: ANCHORE_ENGINE_SERVICES
               Value: anchore-catalog
-            - Name: ANCHORE_HOST_ID
-              Value: anchore-engine-ecs
             - Name: ANCHORE_DB_USER
               Value: !Ref DBUser
             - Name: ANCHORE_DB_PASSWORD
@@ -83,11 +82,11 @@ Resources:
             - ContainerPort: 8083
           MemoryReservation: 512
           LogConfiguration:
-             LogDriver: awslogs
-             Options:
-               awslogs-group: !Ref LogGroup
-               awslogs-region: !Ref AWS::Region
-               awslogs-stream-prefix: anchore-engine
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: anchore-engine
           MountPoints:
             - SourceVolume: "config"
               ContainerPath: "/config/config.yaml"
@@ -95,8 +94,6 @@ Resources:
           Environment:
             - Name: ANCHORE_ENGINE_SERVICES
               Value: anchore-simplequeue
-            - Name: ANCHORE_HOST_ID
-              Value: anchore-engine-ecs
             - Name: ANCHORE_DB_USER
               Value: !Ref DBUser
             - Name: ANCHORE_DB_PASSWORD
@@ -124,11 +121,11 @@ Resources:
             - ContainerPort: 8087
           MemoryReservation: 512
           LogConfiguration:
-             LogDriver: awslogs
-             Options:
-               awslogs-group: !Ref LogGroup
-               awslogs-region: !Ref AWS::Region
-               awslogs-stream-prefix: anchore-engine
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: anchore-engine
           MountPoints:
             - SourceVolume: "config"
               ContainerPath: "/config/config.yaml"
@@ -136,8 +133,6 @@ Resources:
           Environment:
             - Name: ANCHORE_ENGINE_SERVICES
               Value: anchore-policy-engine
-            - Name: ANCHORE_HOST_ID
-              Value: anchore-engine-ecs
             - Name: ANCHORE_DB_USER
               Value: !Ref DBUser
             - Name: ANCHORE_DB_PASSWORD
@@ -165,11 +160,11 @@ Resources:
             - ContainerPort: 8228
           MemoryReservation: 512
           LogConfiguration:
-             LogDriver: awslogs
-             Options:
-               awslogs-group: !Ref LogGroup
-               awslogs-region: !Ref AWS::Region
-               awslogs-stream-prefix: anchore-engine
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: anchore-engine
           MountPoints:
             - SourceVolume: "config"
               ContainerPath: "/config/config.yaml"
@@ -177,8 +172,6 @@ Resources:
           Environment:
             - Name: ANCHORE_ENGINE_SERVICES
               Value: anchore-api
-            - Name: ANCHORE_HOST_ID
-              Value: anchore-engine-ecs
             - Name: ANCHORE_DB_USER
               Value: !Ref DBUser
             - Name: ANCHORE_DB_PASSWORD
@@ -206,11 +199,11 @@ Resources:
             - ContainerPort: 8338
           MemoryReservation: 512
           LogConfiguration:
-             LogDriver: awslogs
-             Options:
-               awslogs-group: !Ref LogGroup
-               awslogs-region: !Ref AWS::Region
-               awslogs-stream-prefix: anchore-engine
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: anchore-engine
           MountPoints:
             - SourceVolume: "config"
               ContainerPath: "/config/config.yaml"
@@ -218,8 +211,6 @@ Resources:
           Environment:
             - Name: ANCHORE_ENGINE_SERVICES
               Value: anchore-kubernetes-webhook
-            - Name: ANCHORE_HOST_ID
-              Value: anchore-engine-ecs
             - Name: ANCHORE_DB_USER
               Value: !Ref DBUser
             - Name: ANCHORE_DB_PASSWORD
@@ -248,11 +239,11 @@ Resources:
             - ContainerPort: 8084
           MemoryReservation: 512
           LogConfiguration:
-             LogDriver: awslogs
-             Options:
-               awslogs-group: !Ref LogGroup
-               awslogs-region: !Ref AWS::Region
-               awslogs-stream-prefix: anchore-engine
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: anchore-engine
           MountPoints:
             - SourceVolume: "config"
               ContainerPath: "/config/config.yaml"
@@ -260,8 +251,6 @@ Resources:
           Environment:
             - Name: ANCHORE_ENGINE_SERVICES
               Value: anchore-worker
-            - Name: ANCHORE_HOST_ID
-              Value: anchore-engine-ecs
             - Name: ANCHORE_DB_USER
               Value: !Ref DBUser
             - Name: ANCHORE_DB_PASSWORD
@@ -361,9 +350,9 @@ Resources:
     Properties:
       HealthCheckIntervalSeconds: 60
       UnhealthyThresholdCount: 10
-      HealthCheckPath: /v1/status
+      HealthCheckPath: /health
       Matcher:
-        HttpCode: 401
+        HttpCode: 200
       Port: 80
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -373,9 +362,9 @@ Resources:
     Properties:
       HealthCheckIntervalSeconds: 60
       UnhealthyThresholdCount: 10
-      HealthCheckPath: /v1/status
+      HealthCheckPath: /health
       Matcher:
-        HttpCode: 401
+        HttpCode: 200
       Port: 80
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -385,9 +374,9 @@ Resources:
     Properties:
       HealthCheckIntervalSeconds: 129
       UnhealthyThresholdCount: 10
-      HealthCheckPath: /v1/status
+      HealthCheckPath: /health
       Matcher:
-        HttpCode: 401
+        HttpCode: 200
       Port: 80
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -409,9 +398,9 @@ Resources:
     Properties:
       HealthCheckIntervalSeconds: 60
       UnhealthyThresholdCount: 10
-      HealthCheckPath: /v1/status
+      HealthCheckPath: /health
       Matcher:
-        HttpCode: 401
+        HttpCode: 200
       Port: 80
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -488,12 +477,12 @@ Resources:
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - ecs.amazonaws.com
-          Action:
-            - sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs.amazonaws.com
+            Action:
+              - sts:AssumeRole
       Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole
