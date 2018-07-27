@@ -163,7 +163,6 @@ Resources:
       FromPort: 8082
       ToPort: 8082
       CidrIp: 0.0.0.0/0
-      # SourceSecurityGroupId: !GetAtt ECSHostSecurityGroup.GroupId
       GroupId: !GetAtt SecurityGroup.GroupId
 
   IngressRuleSimpleQueue:
@@ -173,7 +172,6 @@ Resources:
       FromPort: 8083
       ToPort: 8083
       CidrIp: 0.0.0.0/0
-      # SourceSecurityGroupId: !GetAtt ECSHostSecurityGroup.GroupId
       GroupId: !GetAtt SecurityGroup.GroupId
 
   IngressRulePolicyEngine:
@@ -183,7 +181,6 @@ Resources:
       FromPort: 8087
       ToPort: 8087
       CidrIp: 0.0.0.0/0
-      # SourceSecurityGroupId: !GetAtt ECSHostSecurityGroup.GroupId
       GroupId: !GetAtt SecurityGroup.GroupId
 
   ECSHostSecurityGroup:
