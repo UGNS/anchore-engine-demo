@@ -273,7 +273,7 @@ Resources:
                 # General system-wide configuration options, these should not need to
                 # be altered for basic operation
                 #
-                service_dir: '/local_anchore_config'
+                # service_dir: '/config'
                 # tmp_dir: '/tmp'
                 # log_level: 'DEBUG'
                 #
