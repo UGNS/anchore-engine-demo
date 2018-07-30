@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create anchore-engine ECS infrastructure
 
@@ -188,6 +189,7 @@ Resources:
       VpcId: !Ref VPC
       GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
       SecurityGroupIngress:
+        # Only allow inbound access to ECS from the ELB
         - SourceSecurityGroupId: !Ref SecurityGroup
           IpProtocol: -1
       Tags:
@@ -245,7 +247,7 @@ Resources:
         config:
           commands:
             01_add_instance_to_cluster:
-                command: !Sub echo ECS_CLUSTER=${ECSCluster} > /etc/ecs/ecs.config
+              command: !Sub echo ECS_CLUSTER=${ECSCluster} > /etc/ecs/ecs.config
           files:
             "/etc/cfn/cfn-hup.conf":
               mode: 000400
@@ -281,8 +283,8 @@ Resources:
                 log_level: 'INFO'
                 # log_level: 'DEBUG'
 
-                # This is necessary to ensure that a re-start of the pod on another host works. The string can be anything, but should be explicitly set to identify the host.
-                host_id: ${ANCHORE_HOST_ID}
+                # Leave the host_id unset so it will be auto-generated (a uuid) on container startup and tied to the container's lifecycle
+                #host_id: ${ANCHORE_HOST_ID}
                 internal_ssl_verify: False
 
                 # Uncomment if you have a local endpoint that can accept
